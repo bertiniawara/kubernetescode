@@ -26,10 +26,8 @@ stage('Test image') {
     }
 }
 stage("Docker push image"){
-    steps{
         sh 'docker push betiniawara842/kubernetes1'
         app.push("${env.BUILD_NUMBER}")
-    }
 }
 
 stage('Trigger ManifestUpdate') {
