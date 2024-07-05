@@ -1,41 +1,59 @@
-node {
-    def app
+pipeline {
+    agent any
 
-stage('Clone repository') {
-  
+    stages {
+        stage('Clone Repository') {
+            steps {
+                checkout scm
+            }
+        }
 
-    checkout scm
-}
+        stage('Build Image') {
+            steps {
+                script {
+                    def imageName = "betiniawara842/kubernetes1"
+                    def app = docker.build(imageName)
+                }
+            }
+        }
 
-stage('Build image') {
+        stage('Test Image') {
+            steps {
+                script {
+                    app.inside {
+                        sh 'echo "Tests passed"'
+                    }
+                }
+            }
+        }
 
-   app = docker.build("betiniawara842/kubernetes1")
-}
+        stage('Docker Login') {
+            steps {
+                script {
+                    def credentials = credentialsId('DOCKER_HUB_PASSWORD')
+                    sh "docker login -u betiniawara@gmail.com -p ${credentials.getVariable('PASSWORD')}"
+                }
+            }
+        }
 
-stage('Test image') {
+        stage('Push Image') {
+            steps {
+                script {
+                    def imageName = "betiniawara842/jenkins-docker-demo:${env.BUILD_NUMBER}"
+                    sh "docker push $imageName"
+                    app.push() // Assuming app refers to the built image (if not, use imageName)
+                }
+            }
+        }
 
-
-    app.inside {
-        sh 'echo "Tests passed"'
-    }
-}
-
-stage("Docker Login"){
-    
-    withCredentials([string(credentialsId: 'DOCKER_HUB_PASSWORD', variable: 'PASSWORD')]) {
-        sh 'docker login -u betiniawara@gmail.com -p $PASSWORD'
-
-    }
-}
-    
-stage('Push image') {
-        docker.withRegistry('https://registry.hub.docker.com', 'DOCKER_HUB_PASSWORD') {
-            app.push("${env.BUILD_NUMBER}")
-    }
-}
-
-stage('Trigger ManifestUpdate') {
-            echo "triggering updatemanifestjob"
-            build job: 'updatemanifest', parameters: [string(name: 'DOCKERTAG', value: env.BUILD_NUMBER)]
+        stage('Trigger Manifest Update') {
+            steps {
+                script {
+                    build job: 'updatemanifest', wait: true, parameters: [
+                        string(name: 'DOCKERTAG', value: env.BUILD_NUMBER)
+                    ]
+                }
+            }
+        }
     }
 }
