@@ -20,11 +20,17 @@ stage('Test image') {
     }
 }
 
-stage('Push image') {
+stage("Docker Login"){
+    
     withCredentials([string(credentialsId: 'DOCKER_HUB_PASSWORD', variable: 'PASSWORD')]) {
+        sh 'docker login -u betiniawara@gmail.com -p $PASSWORD'
+
+    }
+}
+    
+stage('Push image') {
         docker.withRegistry('https://registry.hub.docker.com', 'DOCKER_HUB_PASSWORD') {
             app.push("${env.BUILD_NUMBER}")
-        }
     }
 }
 
