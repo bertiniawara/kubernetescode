@@ -1,58 +1,39 @@
 node {
+    def app
 
-    stages {
-        stage('Clone Repository') {
-            steps {
-                checkout scm
-            }
-        }
+stage('Clone repository') {
+  
 
-        stage('Build Image') {
-            steps {
-                script {
-                    def imageName = "betiniawara842/kubernetes1"
-                    def app = docker.build(imageName)
-                }
-            }
-        }
+    checkout scm
+}
 
-        stage('Test Image') {
-            steps {
-                script {
-                    app.inside {
-                        sh 'echo "Tests passed"'
-                    }
-                }
-            }
-        }
+stage('Build image') {
 
-        stage('Docker Login') {
-            steps {
-                script {
-                    def credentials = credentialsId('DOCKER_HUB_PASSWORD')
-                    sh "docker login -u betiniawara@gmail.com -p ${credentials.getVariable('PASSWORD')}"
-                }
-            }
-        }
+   app = docker.build("betiniawara842/kubernetes1")
+}
 
-        stage('Push Image') {
-            steps {
-                script {
-                    def imageName = "betiniawara842/jenkins-docker-demo:${env.BUILD_NUMBER}"
-                    sh "docker push $imageName"
-                    app.push() // Assuming app refers to the built image (if not, use imageName)
-                }
-            }
-        }
+stage('Test image') {
 
-        stage('Trigger Manifest Update') {
-            steps {
-                script {
-                    build job: 'updatemanifest', wait: true, parameters: [
-                        string(name: 'DOCKERTAG', value: env.BUILD_NUMBER)
-                    ]
-                }
-            }
-        }
+
+    app.inside {
+        sh 'echo "Tests passed"'
+    }
+}
+
+ stage("Docker Login"){
+     withCredentials([string(credentialsId: 'DOCKER_HUB_PASSWORD', variable: 'PASSWORD')]) {
+         sh 'docker login -u betiniawara@gmail.com -p $PASSWORD'
+    }
+}
+stage("Docker push image"){
+    steps{
+        sh 'docker push betiniawara842/kubernetes1'
+        app.push("${env.BUILD_NUMBER}")
+    }
+}
+
+stage('Trigger ManifestUpdate') {
+            echo "triggering updatemanifestjob"
+            build job: 'updatemanifest', parameters: [string(name: 'DOCKERTAG', value: env.BUILD_NUMBER)]
     }
 }
