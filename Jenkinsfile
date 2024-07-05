@@ -9,7 +9,7 @@ node {
 
     stage('Build image') {
   
-       app = docker.build("betiniawara842/kubernetes1")
+       app = docker.build("betiniawara842/kubernetes1:latest")
     }
 
     stage('Test image') {
