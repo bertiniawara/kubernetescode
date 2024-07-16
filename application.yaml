@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/bertiniawara/kubernetesmanifest.git
+    repoURL: https://github.com/bertiniawara/updatemanifest.git
     targetRevision: HEAD
     path: updatemanifest
   destination:
